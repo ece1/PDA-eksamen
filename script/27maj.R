@@ -1,7 +1,7 @@
 
 
-save.image(file='26maj.R')
-load('26maj.R')
+save.image(file='27maj.R')
+load('27maj.R')
 
 
 library(ggfortify)
@@ -48,19 +48,19 @@ asyl2<- asyl1[,c(2,3)] %>% round(digits = 5)
 
 
 
-#Laver to ny matrixes bemÃ¦rk det lat og lon stÃ¥r med smÃ¥t ellers vil det ikke virke
+#Laver to ny matrixes bemærk det lat og lon står med småt ellers vil det ikke virke
 lat <- asyl2$Lat
 lon <- asyl2$Long
 
 
-#Vi laver et data.frame der hedder asyl4 og kalder det prÃ¦cis det samme, som de vektorer, der
-#er skabt ovenover. Dette skal gÃ¸res for at "pointDK" nedenunder virker.
+#Vi laver et data.frame der hedder asyl4 og kalder det præcis det samme, som de vektorer, der
+#er skabt ovenover. Dette skal gøres for at "pointDK" nedenunder virker.
 
 asyl4 <- data.frame(lon = lon , lat = lat)
 
 
 
-#plotter ind pÃ¥ kort, tager 5-10 sek.
+#plotter ind på kort, tager 5-10 sek.
 pointDK(asyl4 , detail = "polling", point.colour = "blue")
 
 
@@ -77,37 +77,37 @@ pointDK(asyl4[c(20,21),], detail = "polling", sub.plot = "bornholm", point.colou
 data <- mapDK(detail = "polling")[["data"]] ##NB uden valgresultater
 
 #Laver en ren variabel med lon og lat.
-#SÃ¥ledes fÃ¥r vi koordinaterne for hvert valgdistriktspunkt i hele DK
+#Således får vi koordinaterne for hvert valgdistriktspunkt i hele DK
 data.ren <- data %>% 
   transmute(long, lat )
 
 View(data.ren)
 
 
-#Vi har nu 155.072 rÃ¦kker med valgdistriktspunkt (lon, lat) i hver rÃ¦kke
-#Dette datasÃ¦t skal vi ikke bruge endnu, men senere.
+#Vi har nu 155.072 rækker med valgdistriktspunkt (lon, lat) i hver række
+#Dette datasæt skal vi ikke bruge endnu, men senere.
 
 
 
-# Vi laver nu en variabel ud fra mapDK, hvor vi samler "KommuneNum" og "Afstemkod", sÃ¥ledes at 
-#det bliver til en variabel "prÃ¸ve". DernÃ¦st laver vi en ny variabel "valgID" ud fra
-#"prÃ¸ve", hvor vi erstatter _ med 0. I dette datasÃ¦t har vi ogsÃ¥ "lon" og "lat", som i data.ren
+# Vi laver nu en variabel ud fra mapDK, hvor vi samler "KommuneNum" og "Afstemkod", således at 
+#det bliver til en variabel "prøve". Dernæst laver vi en ny variabel "valgID" ud fra
+#"prøve", hvor vi erstatter _ med 0. I dette datasæt har vi også "lon" og "lat", som i data.ren
 
 
 samlet <- polling %>% 
-  unite(prÃ¸ve, c("KommuneNum","AfstemKod"), remove = F) %>% 
-  mutate(valgID = str_replace(prÃ¸ve, "_", "0"))
+  unite(prøve, c("KommuneNum","AfstemKod"), remove = F) %>% 
+  mutate(valgID = str_replace(prøve, "_", "0"))
 
 
 View(samlet)
 
 
 
-# Vi laver nu en ny variabel, hvor vi fjerner kolonner, som er overflÃ¸dige fra "samlet".
-# sÃ¥ det bliver lettere at overskue.
+# Vi laver nu en ny variabel, hvor vi fjerner kolonner, som er overflødige fra "samlet".
+# så det bliver lettere at overskue.
 str(samlet)
 
-drop.kol <- c("group", "prÃ¸ve","AfstemKod", "id", "KommuneNum", 
+drop.kol <- c("group", "prøve","AfstemKod", "id", "KommuneNum", 
               "KommuneNav", "OpstilNum", "OpstilNav")
 
 stor_data <- samlet %>% select(-one_of(drop.kol))
@@ -123,9 +123,9 @@ stordata1 <- transform(stor_data, valgID = as.numeric(valgID))
 head(stordata1)
 
 #Det smarte er nu, at nu har vi valgID koblet sammen med "lon" og "lat" kan joines med 
-# valgstatistik fra "Danmarks Statistik, der ogsÃ¥ har lon, lat og valgID
+# valgstatistik fra "Danmarks Statistik, der også har lon, lat og valgID
 
-#Inden vi joiner, kobler vi alt vores valgdata pÃ¥ "stordata1". Valgdata fra 2015 og kan 
+#Inden vi joiner, kobler vi alt vores valgdata på "stordata1". Valgdata fra 2015 og kan 
 #nemlig blive joinet med vores valgID i stordata1
 
 #Henter vores valgdata 2015 fra exceldokument.
@@ -143,26 +143,26 @@ View(valgdata2015)
 #Laver "samlet" med lon, lat og valgID om til numeric
 str(samlet)
 
-#ValgID er chr., hvilket laves om til numeric, sÃ¥ det kan joines med valgdata2015 nedenfor.
+#ValgID er chr., hvilket laves om til numeric, så det kan joines med valgdata2015 nedenfor.
 samlet2 <- transform(samlet, valgID = as.numeric(valgID))
 
 #Vi joiner samlet2 og valgdata
 data2 <- left_join(samlet2, valgdata2015, by = c("valgID" = "Gruppe"))
 
-#Juhu. Vi har nu et datasÃ¦t med hvert valgdistrikt koordinater (lon og lat) og dens stemmefordeling
-#i Ã¥r 2015
+#Juhu. Vi har nu et datasæt med hvert valgdistrikt koordinater (lon og lat) og dens stemmefordeling
+#i år 2015
 
 
-# NÃ¦ste operation tager 2-3 min. - vi udregner afstande for hvert af den
+# Næste operation tager 2-3 min. - vi udregner afstande for hvert af den
 # 155072 datapunkter ud fra hvert enkelt asylcenter. Bliver til en matrix
-# Bruges senere, nÃ¥r vi skal udregne afstande til valgsteder. 
-# Vi bruger koordinaterne fra asyl4, og sÃ¥ kun data.ren sÃ¦ttet, som blev lavet tidligere,
+# Bruges senere, når vi skal udregne afstande til valgsteder. 
+# Vi bruger koordinaterne fra asyl4, og så kun data.ren sættet, som blev lavet tidligere,
 # da det bliver mere overskueligt.
 
 dist_asyl_valgsted  <- distm(data.ren, asyl4, fun = distHaversine)
 
 
-#TrÃ¦kker alle navne ud af asylcentre, sÃ¥ de kan tilknyttes kolonnerne i dist_asyl_valgsted
+#Trækker alle navne ud af asylcentre, så de kan tilknyttes kolonnerne i dist_asyl_valgsted
 names <- asylcentre$Asylcenter
 colnames(dist_asyl_valgsted) <- names
 
@@ -184,15 +184,15 @@ str(master)
 
 View(master)
 
-#Vi har nu et datasÃ¦t, hvor hvert asylcenters afstand til hvert konstituerende valgdistriktspunkt 
+#Vi har nu et datasæt, hvor hvert asylcenters afstand til hvert konstituerende valgdistriktspunkt 
 #i hele landet er regnet ud.
 
 #Det er en smule overkill, da det vi er interesseret i, er at udregne afstanden til hvert valgdistrikt 
-#og altsÃ¥ ikke alle dens konstituerende punkter. 
-#Det vil de nÃ¦ste linjers kode forsÃ¸ge at rode bod pÃ¥.
+#og altså ikke alle dens konstituerende punkter. 
+#Det vil de næste linjers kode forsøge at rode bod på.
 
-#TilfÃ¸jer kolonne til master, som viser det et valgdistrikts korteste afstand til 
-#nÃ¦rmeste asylcenter. Dvs. den kun viser afstanden fra alle dens konstituerende valgdistriktspunkter
+#Tilføjer kolonne til master, som viser det et valgdistrikts korteste afstand til 
+#nærmeste asylcenter. Dvs. den kun viser afstanden fra alle dens konstituerende valgdistriktspunkter
 #til det asylcenter med den korteste afstand
 
 
@@ -200,8 +200,8 @@ View(master)
 master$korteste_dist <- apply(master[, 1:46], 1, min)
 
 
-#Grupperer pÃ¥ valgID, for at finde den korteste, gennemsnitlige og max afstand
-#distance indenfor hvert valgdistrikt til nÃ¦rmeste asylcenter
+#Grupperer på valgID, for at finde den korteste, gennemsnitlige og max afstand
+#distance indenfor hvert valgdistrikt til nærmeste asylcenter
 
 master_t <- master %>%
   group_by(valgID) %>%
@@ -210,7 +210,7 @@ master_t <- master %>%
 
 
 View(master_t)
-#Vi har nu fundet den korteste, lÃ¦ngste og gennemsnitlige afstand fra hvert valgdistrikt til nÃ¦rmeste
+#Vi har nu fundet den korteste, længste og gennemsnitlige afstand fra hvert valgdistrikt til nærmeste
 #asylcenter.
 # 
 
@@ -220,7 +220,7 @@ View(master_t)
 parti_stemmekolonne <- c(67:76)
 
 #Bruger for loop.
-# For hver kolonne i master_t i omrÃ¥det "parti_stemmekolonne, skal funktionen
+# For hver kolonne i master_t i området "parti_stemmekolonne, skal funktionen
 #lave en ny kollonne, med det gamle navn + _pct til andet decimal.  
 
 #Den skal udfylde de nye kolonner ved at dividere parti_stemme kolonne variablen med antal 
@@ -235,9 +235,9 @@ View(master_t)
 
 
 
-# VÃ¦lger kun observationer for hvert af de 1419 valgdistrikter.
-#SÃ¥ledes "ignoreres" de resterende 153653 andre observationer, der 
-# sÃ¥ at sige er dobbeltkonfekt i og med den korteste, lÃ¦ngste og
+# Vælger kun observationer for hvert af de 1419 valgdistrikter.
+#Således "ignoreres" de resterende 153653 andre observationer, der 
+# så at sige er dobbeltkonfekt i og med den korteste, længste og
 #gennemsnitlige afstand er regnet ud. 
 
 
@@ -256,13 +256,13 @@ afstand <- master_t3[1:1419, 82:84] %>%
 
 summary(afstand$kort_dist_endelig)
 #Den formel bruges i opgaven til at sige noget om, hvor forskellige henholdvis 
-#gennemsnitsafstand, lÃ¦ngste og korteste afstand er fra hinanden. 
+#gennemsnitsafstand, længste og korteste afstand er fra hinanden. 
 
 
 
-#Laver vektor hvor unÃ¸dvendige kolonner er specificeret
+#Laver vektor hvor unødvendige kolonner er specificeret
 
-fjernkol1 <- c("long", "lat","group", "prÃ¸ve", "AfstemKod",
+fjernkol1 <- c("long", "lat","group", "prøve", "AfstemKod",
                "OpstilNum", "ValgstedId", "KredsNr", "StorKredsNr", "LandsdelsNr")
 
 master_t4 <- master_t3 %>% 
@@ -270,23 +270,23 @@ master_t4 <- master_t3 %>%
 
 View(master_t4)
 
-# Vi har nu et datasÃ¦t med valgdatafor hvert valgdistrikt og hvert valgdistrikts afstand til 
-#nÃ¦rmeste asylcenter.
+# Vi har nu et datasæt med valgdatafor hvert valgdistrikt og hvert valgdistrikts afstand til 
+#nærmeste asylcenter.
 
-# KlargÃ¸ring af data ------------------------------------------------------
+# Klargøring af data ------------------------------------------------------
 
 
-#Henter kontrolvariable fra to datasÃ¦t
+#Henter kontrolvariable fra to datasæt
 kontrol <- read_xlsx("\\Users\\chemn\\OneDrive\\8. semester\\politcal data science\\Eksamensopgave\\master_kontrol_1.xlsx")
 borgmestre <- read_xlsx("\\Users\\chemn\\OneDrive\\8. semester\\politcal data science\\Eksamensopgave\\borgmestre_1.xlsx")
 
-#OmdÃ¸ber for at kunne merge pÃ¥ ved en unik ID lÃ¦ngere nede.
+#Omdøber for at kunne merge på ved en unik ID længere nede.
 
 
 colnames(kontrol)[1] <- "Kommune"
 colnames(kontrol)[4] <- "KommuneNum"
 
-#OmdÃ¸ber kolonner
+#Omdøber kolonner
 colnames(master_t4)[75] <- "soc"
 colnames(master_t4)[76] <- "RV"
 colnames(master_t4)[77] <- "kons"
@@ -318,7 +318,7 @@ final <- transform(final, formue=formue/100000)
 #Laver forordelingsblokke
 
 final$roedblok <- final$soc + final$RV + final$SF + final$EL + final$alt
-final$blaablok <- final$venstre + final$kons + final$LA + final$krist + final$DF.1
+final$blaablok <- final$venstre + final$kons + final$LA + final$krist + final$DF
 
 
 #Laver dummy for by - KBH og FrB = 1, resten = 0
@@ -331,8 +331,8 @@ final <- mutate(final, storby = ifelse(KommuneNum %in% storbyer, 1, 0))
 
 View(final)
 
-#Vi har nu det endelige datasÃ¦t.
-#Vi sletter lige kolonner, som virker overflÃ¸dige.
+#Vi har nu det endelige datasæt.
+#Vi sletter lige kolonner, som virker overflødige.
 
 
 final <- select(final, -1:-48,-48,-71,-85,-102,-103)
@@ -367,14 +367,14 @@ DF_alle <-  lm(DF ~ kort_dist_endelig + beftaet + ledige_pct + sb_ikkevest_pr100
 sjt.lm(DFbi, DF_indvandring, DF_demo, DF_demo_indv, DF_kriminalitet, DF_kapital, DF_politik, DF_alle,
        p.numeric = F, show.ci = F, show.se = T, show.fstat = T, depvar.labels = c("Bivariat", "Indvandring",
        "Demografi", "Demografi + Indvandring", "Kriminalitet", "Kapital", "Borgmester", "Alle kontroller"))
-#ForudsÃ¦tnignstest
+#Forudsætnignstest
 autoplot(DF_alle, which = 1:6, ncol = 3, label.size = 3)
 
 
 
 # Interaktion  --------------------------------------------------------
-#Vi vil undersÃ¸ge interaktionsvariabel for borgmesterfarve og storby/land
-#FÃ¸rst borgmesterfarve.
+#Vi vil undersøge interaktionsvariabel for borgmesterfarve og storby/land
+#Først borgmesterfarve.
 DF_storby <- lm(DF ~ kort_dist_endelig*storby + beftaet + ledige_pct + sb_ikkevest_pr10000 +
                                   sb_vest_pr10000 + formue + Gns_alder + lvu + tyvindbr_pr1000 + 
                                   vold_pr1000, data = final)
@@ -382,12 +382,12 @@ DF_borg <- lm(DF ~ kort_dist_endelig*borgblok + beftaet + storby + ledige_pct + 
                     sb_vest_pr10000 + formue + Gns_alder + lvu + tyvindbr_pr1000 + 
                     vold_pr1000, data = final)
 
-#ForudsÃ¦tningstest
+#Forudsætningstest
 
 autoplot(DF_borg_int, which = 1:6, ncol = 3, label.size = 3)
 autoplot(DF_storby, which = 1:6, ncol = 3, label.size = 3)
 
-# Vi laver nu det sammen men med storby, som interaktionsvariabel. Det er sÃ¥dan, 
+# Vi laver nu det sammen men med storby, som interaktionsvariabel. Det er sådan, 
 autoplot(DF_borg, which = 1:6, ncol = 3, label.size = 3)
 
 sjt.lm(DF_alle, DF_borg, DF_storby, p.numeric = F, show.ci = F, show.se = T, 
@@ -396,64 +396,64 @@ sjt.lm(DF_alle, DF_borg, DF_storby, p.numeric = F, show.ci = F, show.se = T,
 
 
 
-# RÃ¸d blok regressioner ---------------------------------------------------
+# Rød blok regressioner ---------------------------------------------------
 
-#Den afhÃ¦ngige variabel er rÃ¸d blok. Hele shittet er signifikant
-rÃ¸dbi <- lm(roedblok ~ kort_dist_endelig, data = final)
+#Den afhængige variabel er rød blok. Hele shittet er signifikant
+rødbi <- lm(roedblok ~ kort_dist_endelig, data = final)
 
-rÃ¸d_indvandring <- lm(roedblok ~ kort_dist_endelig + sb_ikkevest_pr10000 + sb_vest_pr10000, data = final)
+rød_indvandring <- lm(roedblok ~ kort_dist_endelig + sb_ikkevest_pr10000 + sb_vest_pr10000, data = final)
 
-rÃ¸d_demo <- lm(roedblok ~ kort_dist_endelig + beftaet + Gns_alder, data = final)
+rød_demo <- lm(roedblok ~ kort_dist_endelig + beftaet + Gns_alder, data = final)
 
-rÃ¸d_demo_indv <- lm(roedblok ~ kort_dist_endelig + beftaet + Gns_alder + sb_ikkevest_pr10000 + sb_vest_pr10000, data = final)
-
-
-rÃ¸d_kriminalitet <- lm(roedblok ~ kort_dist_endelig + tyvindbr_pr1000 + vold_pr1000 , data = final)
-
-rÃ¸d_kapital <- lm(roedblok ~ kort_dist_endelig + formue + lvu + ledige_pct, data = final)
-
-rÃ¸d_politik <- lm(roedblok ~ kort_dist_endelig + borgblok, data = final)
+rød_demo_indv <- lm(roedblok ~ kort_dist_endelig + beftaet + Gns_alder + sb_ikkevest_pr10000 + sb_vest_pr10000, data = final)
 
 
-rÃ¸d_alle <-  lm(roedblok ~ kort_dist_endelig + beftaet + ledige_pct + sb_ikkevest_pr10000 +
+rød_kriminalitet <- lm(roedblok ~ kort_dist_endelig + tyvindbr_pr1000 + vold_pr1000 , data = final)
+
+rød_kapital <- lm(roedblok ~ kort_dist_endelig + formue + lvu + ledige_pct, data = final)
+
+rød_politik <- lm(roedblok ~ kort_dist_endelig + borgblok, data = final)
+
+
+rød_alle <-  lm(roedblok ~ kort_dist_endelig + beftaet + ledige_pct + sb_ikkevest_pr10000 +
                  sb_vest_pr10000 + formue + storby + Gns_alder + lvu + tyvindbr_pr1000 + vold_pr1000 + borgblok, data = final)
 
 
-sjt.lm(rÃ¸dbi, rÃ¸d_indvandring, rÃ¸d_demo, rÃ¸d_demo_indv, rÃ¸d_kriminalitet, rÃ¸d_kapital, rÃ¸d_politik, rÃ¸d_alle,
+sjt.lm(rødbi, rød_indvandring, rød_demo, rød_demo_indv, rød_kriminalitet, rød_kapital, rød_politik, rød_alle,
        p.numeric = F, show.ci = F, show.se = T, show.fstat = T, 
        depvar.labels = c("Bivariat", "Indvandring",
       "Demografi", "Demografi + Indvandring", "Kriminalitet", "Kapital", 
       "Borgmester", "Alle kontroller"))
 
 
-autoplot(rÃ¸d_storby, which = 1:6, ncol = 3, label.size = 3)
-autoplot(rÃ¸d_alle, which = 1:6, ncol = 3, label.size = 3)
+autoplot(rød_storby, which = 1:6, ncol = 3, label.size = 3)
+autoplot(rød_alle, which = 1:6, ncol = 3, label.size = 3)
 
 
 
-rÃ¸d_storby<-  lm(roedblok ~ kort_dist_endelig*storby + ledige_pct + beftaet + storby 
+rød_storby<-  lm(roedblok ~ kort_dist_endelig*storby + ledige_pct + beftaet + storby 
                      + sb_ikkevest_pr10000 + formue + Gns_alder + sb_vest_pr10000 +
                    + tyvindbr_pr1000 + vold_pr1000 + storby + lvu + borgblok, data = final)
 
 
-sjt.lm(rÃ¸d_alle, rÃ¸d_storby,
+sjt.lm(rød_alle, rød_storby,
        p.numeric = F, show.ci = F, show.se = T, show.fstat = T,
        depvar.labels = c("Alle kontrolle", "Storby"))
 
-#ForudsÃ¦tningstest
-autoplot(rÃ¸d_storby, which = 1:6, ncol = 3, label.size = 3)
-autoplot(rÃ¸d_alle, which = 1:6, ncol = 3, label.size = 3)
+#Forudsætningstest
+autoplot(rød_storby, which = 1:6, ncol = 3, label.size = 3)
+autoplot(rød_alle, which = 1:6, ncol = 3, label.size = 3)
 
 
-#Plot til rÃ¸d blok storby
+#Plot til rød blok storby
 
 gg <- ggplot(final, aes(kort_dist_endelig, roedblok, colour = factor(storby))) + geom_point()
 
 gg +  geom_smooth(color = "yellow", method ="lm", fill = "green") +
   scale_colour_manual(labels = c("Land", "By"), values = c("dodgerblue3", "firebrick3")) +
   labs(y="DF i %", 
-       x="Afstand til nÃ¦rmeste asylcenter (km)", 
-       title="Afstand og opbakning til RÃ¸d Blok",
+       x="Afstand til nærmeste asylcenter (km)", 
+       title="Afstand og opbakning til Rød Blok",
        color = "Valgdistriktstype") +
   scale_fill_discrete(breaks=c("trt1","ctrl")) + 
   geom_point(aes(shape=as.factor(storby)), show.legend = F)
